@@ -1,0 +1,11 @@
+/polyx_ns:
+  polyx_node_talker:
+    ros__parameters:
+      use_sim_time: False
+      eth_enable: True
+      eth_server: 192.168.130.97 #"10.1.10.194"
+      eth_port: "8888"
+      polyx_wheelspeed:   "/polyx_events/polyx_WheelSpeed"
+      polyx_staticheading: "/polyx_events/polyx_StaticHeading"
+      polyx_staticgeopose: "/polyx_events/polyx_StaticGeoPose"
+      polyx_output: 0xFFFFFFFF
