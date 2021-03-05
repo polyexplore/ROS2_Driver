@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, PolyExplore Inc.
+ * Copyright (C) 2020, PolyExplore, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
+ *   * Neither the name of PolyExplore, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -41,7 +41,9 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
 
+#ifdef ENABLED_GEO_POSE_STAMPED
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
+#endif
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
@@ -215,13 +217,14 @@ void AccelStampedCallback(const geometry_msgs::msg::AccelStamped::SharedPtr msg)
 
   RCLCPP_INFO(node->get_logger(), "message[%p], time=%09u:%09u\n", msg, msg->header.stamp.sec, msg->header.stamp.nanosec);
 }
-
+#ifdef ENABLED_GEO_POSE_STAMPED
 void GeoPoseStampedCallback(const geographic_msgs::msg::GeoPoseStamped::SharedPtr msg)
 {
   RCLCPP_INFO(node->get_logger(), ">>> Received a geographic_msgs::GeoPoseStamped message:");
 
   RCLCPP_INFO(node->get_logger(), "message[%p], time=%09u:%09u\n", msg, msg->header.stamp.sec, msg->header.stamp.nanosec);
 }
+#endif
 
 void NavSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
 {
@@ -284,7 +287,11 @@ int main(int argc, char **argv)
   auto pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 50, PoseStampedCallback);
   auto twist_sub = node->create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 50, TwistStampedCallback);
   auto accel_sub = node->create_subscription<geometry_msgs::msg::AccelStamped>("current_acceleration", 50, AccelStampedCallback);
+
+#ifdef ENABLED_GEO_POSE_STAMPED
   auto geopose_sub = node->create_subscription<geographic_msgs::msg::GeoPoseStamped>("current_geopose", 50, GeoPoseStampedCallback);
+#endif
+
   auto navsatfix_sub = node->create_subscription<sensor_msgs::msg::NavSatFix>("current_navsatfix", 50, NavSatFixCallback);
   auto imu_sub = node->create_subscription<sensor_msgs::msg::Imu>("current_imu", 50, ImuCallback);
   auto EulerAttitude_sub = node->create_subscription<polyx_node::msg::EulerAttitude>("polyx_EulerAttitude", 50, EulerAttitudeCallback);

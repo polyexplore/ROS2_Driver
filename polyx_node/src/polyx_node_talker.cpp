@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, PolyExplore Inc.
+ * Copyright (C) 2020, PolyExplore, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
+ *   * Neither the names of PolyExplore, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -95,7 +95,6 @@ polyx_node::msg::CorrectedIMU cimsg;
 polyx_node::msg::LeapSeconds lsmsg;
 polyx_node::msg::Dmi dmi_msg;
 
-
 int new_output;
 
 using namespace polyx;
@@ -111,6 +110,9 @@ int read_serail(void);
 PolyxnodeTalker::PolyxnodeTalker() : Node("polyx_node_talker")
 {
    this->init();
+
+   tsmsg.system_computer_time = 0;
+
    timer_ = this->create_wall_timer(
       std::chrono::milliseconds(5), std::bind(&PolyxnodeTalker::execute, this));
 }
@@ -326,7 +328,9 @@ void PolyxnodeTalker::init()
    RawIMU_pub_ = this->create_publisher<polyx_node::msg::RawIMU>("polyx_rawIMU", 2);
    SolutionStatus_pub_ = this->create_publisher<polyx_node::msg::SolutionStatus>("polyx_solutionStatus", 2);
    compactNav_pub_ = this->create_publisher<polyx_node::msg::CompactNav>("polyx_compactNav", 2);
+#ifdef ENABLED_GEO_POSE_STAMPED   
    geopose_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>("current_geopose", 2);
+#endif   
    pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", 2);
    twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("current_velocity", 2);
    accel_pub_ = this->create_publisher<geometry_msgs::msg::AccelStamped>("current_acceleration", 2);
@@ -473,6 +477,7 @@ void PolyxnodeTalker::execute()
                      break;
                   case 8:
                      parse_RawIMU_message(buf, imsg);
+                     getTimeStamp(imsg.system_time, imsg.header.stamp);
                      RawIMU_pub_->publish(imsg);
                      break;
                   case 9:
@@ -482,6 +487,7 @@ void PolyxnodeTalker::execute()
 
                   case 12: // DMI message
                      parse_dmi_message(buf, dmi_msg);
+                     getTimeStamp(dmi_msg.system_time, dmi_msg.header.stamp);
                      dmi_pub_->publish(dmi_msg);
                      break;
 
@@ -500,12 +506,14 @@ void PolyxnodeTalker::execute()
                      parse_CompactNav_message(buf, msg, msg13_frame_trans);
 
                      if (my_output & OUT_COMPACTNAV)  compactNav_pub_->publish(msg);
+#ifdef ENABLED_GEO_POSE_STAMPED
                      if (my_output & OUT_GEOPOSE)
                      {
                         geographic_msgs::msg::GeoPoseStamped pmsg;
                         icd_to_GeoPoseStamped(msg, pmsg);
                         geopose_pub_->publish(pmsg);
                      }
+#endif
                      if (my_output & OUT_TWIST)
                      {
                         geometry_msgs::msg::TwistStamped tmsg;
@@ -651,6 +659,16 @@ int write_port(int fd, void* buf, int len)
    return num;
 }
 
+void PolyxnodeTalker::getTimeStamp(const double t, builtin_interfaces::msg::Time& stamp)
+{
+   if (INI_GPS_WEEK > 0 && tsmsg.system_computer_time)
+   {
+      double t_gps = t - tsmsg.bias_to_gps_time;
+      GpsToEpoch(INI_GPS_WEEK, t_gps, stamp);
+   }
+   else
+      stamp = this->get_clock()->now();
+}
 
 int read_port(int fd, uint8_t* buf, size_t max_len, struct timeval* tout)
 {

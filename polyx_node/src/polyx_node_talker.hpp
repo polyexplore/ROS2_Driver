@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, PolyExplore Inc.
+ * Copyright (C) 2020, PolyExplore, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
+ *   * Neither the names of PolyExplore, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -33,11 +33,14 @@
 //  ls install/polyx_node/include/polyx_node/msg/ --ignore={"*__*","*.h"} -1
 
  // %EndTag(MSG_HEADER)%
-#include "std_msgs/msg/string.hpp"
+#include <std_msgs/msg/string.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
+
+#ifdef ENABLED_GEO_POSE_STAMPED
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
+#endif
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
@@ -58,12 +61,15 @@ private:
     void polyxStaticHeadingEventCallback(const polyx_node::msg::StaticHeadingEvent::SharedPtr stmsg);
     void polyxStaticGeoPoseEventCallback(const polyx_node::msg::StaticGeoPoseEvent::SharedPtr sgmsg);
     void execute();
+    void getTimeStamp(const double t, builtin_interfaces::msg::Time& stamp);
 
     rclcpp::Publisher<polyx_node::msg::Kalman>::SharedPtr kalman_pub_;
     rclcpp::Publisher<polyx_node::msg::RawIMU>::SharedPtr RawIMU_pub_;
     rclcpp::Publisher<polyx_node::msg::SolutionStatus>::SharedPtr SolutionStatus_pub_;
     rclcpp::Publisher<polyx_node::msg::CompactNav>::SharedPtr compactNav_pub_;
+#ifdef ENABLED_GEO_POSE_STAMPED    
     rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr geopose_pub_;
+#endif
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
     rclcpp::Publisher<geometry_msgs::msg::AccelStamped>::SharedPtr accel_pub_;

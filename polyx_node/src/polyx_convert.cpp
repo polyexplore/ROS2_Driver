@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
+ *   * Neither the names of PolyExplore, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -38,9 +38,11 @@
 #define SEC_PER_WEEK 604800.0
 #define MAS_TO_RAD 4.84813681109535940e-09 // milli-arc-sec to rad
 
+int LEAP_SECONDS = 18; // GPS-UTC time offset (s)
+int INI_GPS_WEEK = -1; // Initial GPS week number
+
 namespace polyx
 {
-
 typedef struct 
 {
    double trans[3];
@@ -54,7 +56,7 @@ void  GpsToEpoch(int gps_week, double gps_tow, builtin_interfaces::msg::Time &tm
    double t;
    
    if (gps_week > 0)
-      t = GPS_TIME_BEG + gps_week * SEC_PER_WEEK + gps_tow;
+      t = GPS_TIME_BEG + gps_week * SEC_PER_WEEK + gps_tow - LEAP_SECONDS;
    else
       t = gps_tow;
 
@@ -68,7 +70,7 @@ void EpochToGps(
    int&             gps_week, 
    double&          gps_tow)
 {
-   double t = tm.sec - GPS_TIME_BEG + tm.nanosec * 1.0e-9;
+   double t = tm.sec - GPS_TIME_BEG + tm.nanosec * 1.0e-9 + LEAP_SECONDS;
 
    gps_week = floor(t / SEC_PER_WEEK);
    gps_tow = t - (gps_week * SEC_PER_WEEK);
@@ -188,8 +190,9 @@ void icd_to_Imu(polyx_node::msg::CompactNav &msg, sensor_msgs::msg::Imu &imu)
 
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to GeoPoseStamped message
+#ifdef ENABLED_GEO_POSE_STAMPED
 void icd_to_GeoPoseStamped(
-   polyx_node::msg::CompactNav&                msg,
+   polyx_node::msg::CompactNav&          msg,
    geographic_msgs::msg::GeoPoseStamped& ps)
 {
    geometry_msgs::msg::Quaternion q1;
@@ -213,11 +216,12 @@ void icd_to_GeoPoseStamped(
    QuatProd(q1, q2, ps.pose.orientation);
 
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to TwistStamped message
 void icd_to_TwistStamped(
-   polyx_node::msg::CompactNav&            msg,
+   polyx_node::msg::CompactNav&      msg,
    geometry_msgs::msg::TwistStamped& ts)
 {
    ts.header.stamp = msg.header.stamp;
@@ -237,7 +241,7 @@ void icd_to_TwistStamped(
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to AccelStamped message
 void icd_to_AccelStamped(
-   polyx_node::msg::CompactNav&            msg,
+   polyx_node::msg::CompactNav&      msg,
    geometry_msgs::msg::AccelStamped& as)
 {
    as.header.stamp = msg.header.stamp;
@@ -355,8 +359,8 @@ void SetOrigin(
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to PoseStamped message
 void icd_to_PoseStamped(
-   const polyx_node::msg::CompactNav&     msg,
-   const struct origin_type&   org,
+   const polyx_node::msg::CompactNav& msg,
+   const struct origin_type& org,
    geometry_msgs::msg::PoseStamped& ps)
 {
    double dr_e[3], dr_n[3];
@@ -768,6 +772,9 @@ void parse_CompactNav_message(
    Decode(&buf[p], msg.gps_week_number);  p += 2; // uint16
    msg.alignment = buf[p];
 
+   if (INI_GPS_WEEK < 0 && msg.gps_week_number > 0)
+      INI_GPS_WEEK = msg.gps_week_number;
+
    if (frame_trans == ref_frame_trans_type::WGS84_TO_NAD83)
    {
       ConvertToNAD83(msg.gps_week_number, msg.gps_time_week, msg.latitude, msg.longitude, msg.altitude);
@@ -810,6 +817,7 @@ void parse_LeapSeconds_message(uint8_t *buf, polyx_node::msg::LeapSeconds &lsmsg
 {
    // only one byte, do nothing
    lsmsg.leap_seconds = buf[6];
+   LEAP_SECONDS = lsmsg.leap_seconds;
 }
 
 void parse_dmi_message(uint8_t *buf, polyx_node::msg::Dmi &dmi)

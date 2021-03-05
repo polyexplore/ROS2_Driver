@@ -23,7 +23,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(geographic_msgs REQUIRED)
+#find_package(geographic_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 # interface
@@ -58,7 +58,7 @@ set(dependencies
   "nav_msgs"
   "sensor_msgs"
   "geometry_msgs"
-  "geographic_msgs"
+#  "geographic_msgs"
 )
 
 # generate msgs

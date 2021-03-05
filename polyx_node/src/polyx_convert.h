@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
+ *   * Neither the names of PolyExplore, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -32,9 +32,12 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
+
+// Activate definition below to pub/sub geographic_msgs::msg::GeoPoseStamped
+// #define ENABLED_GEO_POSE_STAMPED 
+#ifdef ENABLED_GEO_POSE_STAMPED
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
-
-
+#endif
 
 // no need to explicitly include quaternion, since already in pose_stamped
 // #include <geometry_msgs/msg/quaternion.hpp>
@@ -58,6 +61,8 @@
 #include "polyx_node/msg/static_geo_pose_event.hpp"
 #include "polyx_node/msg/dmi.hpp"
 #include "polyx_node/msg/nmea_gga.hpp"
+
+
 namespace polyx
 {
 
@@ -107,9 +112,11 @@ void icd_to_Imu(polyx_node::msg::CompactNav& msg, sensor_msgs::msg::Imu& imu);
 
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to GeoPoseStamped message
+#ifdef ENABLED_GEO_POSE_STAMPED
 void icd_to_GeoPoseStamped(
-   polyx_node::msg::CompactNav&                msg,
+   polyx_node::msg::CompactNav&          msg,
    geographic_msgs::msg::GeoPoseStamped& ps);
+#endif
 
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to TwistStamped message
@@ -211,5 +218,8 @@ void parse_LeapSeconds_message(uint8_t *buf, polyx_node::msg::LeapSeconds &lsmsg
 void parse_dmi_message(uint8_t *buf, polyx_node::msg::Dmi &dmi);
 
 } //namespace polyx
+
+extern int LEAP_SECONDS;
+extern int INI_GPS_WEEK;
 
 #endif // _POLYX_CONVERT_H
