@@ -70,7 +70,7 @@ We have successfully built our driver on Dashing and Foxy-FitzRoy
 <!-- GETTING STARTED -->
 
 ## Ethernet Output
-1. Connect our device to though the eithernet port, figure out the device's static ip, for example 10.1.10.194
+1. Connect our device to the eithernet port, figure out the device's static ip, for example 10.1.10.194
 2. Open the param/polyx_talker_params.yaml, you will see the following parameterss
     ```yaml
     /polyx_ns:
@@ -107,7 +107,7 @@ We have successfully built our driver on Dashing and Foxy-FitzRoy
     /polyx_ns/polyx_correctedIMU
     ```
 ## Local Map Origin
-By default the ROS2 driver used the first navigation solution as the origin. To set a specific position as the origin of your local map, please use the following function defined in polyx_convert.cpp:
+By default the ROS2 driver uses the first navigation solution as the origin. To set a specific position as the origin of your local map, please use the following function defined in polyx_convert.cpp:
   ```cpp
   void SetCustomOrigin(
     double               latitude,   // radian

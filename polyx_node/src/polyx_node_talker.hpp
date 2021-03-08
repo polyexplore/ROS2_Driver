@@ -29,10 +29,7 @@
 #define POLYX_node_TALKER_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "polyx_convert.h"
-//  ls install/polyx_node/include/polyx_node/msg/ --ignore={"*__*","*.h"} -1
 
- // %EndTag(MSG_HEADER)%
 #include <std_msgs/msg/string.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -45,6 +42,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+
+#include "polyx_convert.h"
 
 class PolyxnodeTalker : public rclcpp::Node
 {
@@ -61,7 +60,7 @@ private:
     void polyxStaticHeadingEventCallback(const polyx_node::msg::StaticHeadingEvent::SharedPtr stmsg);
     void polyxStaticGeoPoseEventCallback(const polyx_node::msg::StaticGeoPoseEvent::SharedPtr sgmsg);
     void execute();
-    void getTimeStamp(const double t, builtin_interfaces::msg::Time& stamp);
+    
 
     rclcpp::Publisher<polyx_node::msg::Kalman>::SharedPtr kalman_pub_;
     rclcpp::Publisher<polyx_node::msg::RawIMU>::SharedPtr RawIMU_pub_;
@@ -75,6 +74,7 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::AccelStamped>::SharedPtr accel_pub_;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr navfix_pub_;
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr attitude_imu_pub_;
     rclcpp::Publisher<polyx_node::msg::EulerAttitude>::SharedPtr EulerAttitude_pub_;
     rclcpp::Publisher<polyx_node::msg::TimeSync>::SharedPtr timeSync_pub_;
     rclcpp::Publisher<polyx_node::msg::Geoid>::SharedPtr geoid_pub_;
@@ -103,6 +103,9 @@ private:
     uint8_t buf[MaxMsgLen];
     int bufpos = 0;
     int msglen = 0;
+
+    void getTimeStamp(const double t, builtin_interfaces::msg::Time& stamp);
+    void parseAttitudeImu(uint8_t* buf, sensor_msgs::msg::Imu& imu);
 };
 
 #endif

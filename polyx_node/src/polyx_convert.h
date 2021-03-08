@@ -185,6 +185,41 @@ void ConvertToNAD83(
    double&         alt);
    
 //-----------------------------------------------------------------------------
+// 3x3 Covariance
+template<typename T, typename U> void AssignDiagCov3(const T& rms, U& cov)
+{
+   // Diagonals
+   cov[0] = rms[0] * rms[0];
+   cov[4] = rms[1] * rms[1];
+   cov[8] = rms[2] * rms[2];
+
+   // Off diagonals
+
+   cov[1] = cov[2] = cov[3] = cov[5] = cov[6] = cov[7] = 0;
+
+}
+
+//-----------------------------------------------------------------------------
+// 6x6 Covariance: to be used for pose and twist
+template<typename T, typename U> void AssignDiagCov6(const T& rms1, const T& rms2, U& cov)
+{
+   // initialize to zero
+   for (int i = 0; i < 36; ++i)
+      cov[i] = 0;
+
+   // Diagonals
+   cov[0] = rms1[0] * rms1[0];
+   cov[7] = rms1[1] * rms1[1];
+   cov[14] = rms1[2] * rms1[2];
+
+   cov[21] = rms2[0] * rms2[0];
+   cov[28] = rms2[1] * rms2[1];
+   cov[35] = rms2[2] * rms2[2];
+
+
+}
+
+//-----------------------------------------------------------------------------
 // Decoding funtions for little-endian data
 void Decode(const uint8_t* p, double& d);
 void Decode(const uint8_t* p, int32_t& i32);

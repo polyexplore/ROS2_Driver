@@ -336,6 +336,7 @@ void PolyxnodeTalker::init()
    accel_pub_ = this->create_publisher<geometry_msgs::msg::AccelStamped>("current_acceleration", 2);
    navfix_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("current_navsatfix", 2);
    imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("current_imu", 2);
+   attitude_imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("attitude_imu", 2);
    EulerAttitude_pub_ = this->create_publisher<polyx_node::msg::EulerAttitude>("polyx_EulerAttitude", 2);
    timeSync_pub_ = this->create_publisher<polyx_node::msg::TimeSync>("polyx_timeSync", 2);
    geoid_pub_ = this->create_publisher<polyx_node::msg::Geoid>("polyx_Geoid", 2);
@@ -532,18 +533,19 @@ void PolyxnodeTalker::execute()
                         icd_to_NavSatFix(msg, nmsg);
                         navfix_pub_->publish(nmsg);
                      }
-                     if (my_output & OUT_IMU)
-                     {
-                        sensor_msgs::msg::Imu imsg;
-                        icd_to_Imu(msg, imsg);
-                        imu_pub_->publish(imsg);
-                     }
+
                      if (my_output & OUT_EULER_ATT)
                      {
                         if (EulerAttitude(msg, qtemsg))
                         {
                            EulerAttitude_pub_->publish(qtemsg);
                         }
+                     }
+                     if (my_output & OUT_IMU)
+                     {
+                        sensor_msgs::msg::Imu imsg;
+                        parseAttitudeImu(buf, imsg);
+                        imu_pub_->publish(imsg);
                      }
                      if (!is_origin_set) {
                         SetOrigin(msg, myorigin);
@@ -577,6 +579,15 @@ void PolyxnodeTalker::execute()
                   case 24:
                      parse_LeapSeconds_message(buf, lsmsg);
                      leapSeconds_pub_->publish(lsmsg);
+                     break;
+
+                  case 59: // Attitude and IMU
+                     if (my_output & OUT_IMU)
+                     {
+                        sensor_msgs::msg::Imu imsg;
+                        parseAttitudeImu(buf, imsg);
+                        attitude_imu_pub_->publish(imsg);
+                     }
                      break;
 
                   default:
@@ -668,6 +679,65 @@ void PolyxnodeTalker::getTimeStamp(const double t, builtin_interfaces::msg::Time
    }
    else
       stamp = this->get_clock()->now();
+}
+
+void PolyxnodeTalker::parseAttitudeImu(uint8_t* buf, sensor_msgs::msg::Imu& imu)
+{
+   uint16_t week;
+   double time;
+   float att_rms[3];
+   double q[4];
+
+   int i = 6;
+
+   imu.header.frame_id = "imu_link_ned";
+
+   polyx::Decode(&buf[i], time); i += 8;
+   
+   // Quaternion from body to NED
+   for (int k = 0; k < 4; ++k, i += 8)
+      polyx::Decode(&buf[i], q[k]);
+      
+   imu.orientation.x = q[0];
+   imu.orientation.y = q[1];
+   imu.orientation.z = q[2];
+   imu.orientation.w = q[3];
+
+   for (int k = 0; k < 3; ++k, i += 4)
+      polyx::Decode(&buf[i], att_rms[k]);
+   
+   polyx::AssignDiagCov3(att_rms, imu.orientation_covariance);
+
+   // Rotation rate in body frame (rad/s)
+   for (int k = 0; k < 3; ++k, i += 8)
+      polyx::Decode(&buf[i], q[k]);
+
+   imu.angular_velocity.x = q[0];
+   imu.angular_velocity.y = q[1];
+   imu.angular_velocity.z = q[2];
+
+   // Unknown angular velocity covariance
+   imu.angular_velocity_covariance[0] = -1.0;
+
+   // Acceleration (m/s^2)
+   for (int k = 0; k < 3; ++k, i += 8)
+      polyx::Decode(&buf[i], q[k]);
+
+   imu.linear_acceleration.x = q[0];
+   imu.linear_acceleration.y = q[1];
+   imu.linear_acceleration.z = q[2];
+
+   // Unknown acceleration covariance
+   imu.linear_acceleration_covariance[0] = -1.0;
+
+   polyx::Decode(&buf[i], week); i += 2;
+
+   // Assign timestamp
+   if (week == 0xffff)
+      imu.header.stamp = this->get_clock()->now();
+   else
+      GpsToEpoch(week, time, imu.header.stamp);
+
 }
 
 int read_port(int fd, uint8_t* buf, size_t max_len, struct timeval* tout)
