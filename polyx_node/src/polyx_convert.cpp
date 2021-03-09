@@ -105,7 +105,7 @@ void QuatNED2ENU(geometry_msgs::msg::Quaternion& q)
 //-----------------------------------------------------------------------------
 // Convert PE CompactNav message to NavSatFix message
 void icd_to_NavSatFix(
-   polyx_node::msg::CompactNav&       msg,
+   polyx_node::msg::CompactNav& msg,
    sensor_msgs::msg::NavSatFix& nsf)
 {
    nsf.header.stamp = msg.header.stamp;
@@ -114,8 +114,8 @@ void icd_to_NavSatFix(
    nsf.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS |
       sensor_msgs::msg::NavSatStatus::SERVICE_GLONASS;
 
-   nsf.latitude = msg.latitude;
-   nsf.longitude = msg.longitude;
+   nsf.latitude = msg.latitude * RAD_TO_DEG;
+   nsf.longitude = msg.longitude * RAD_TO_DEG;
    nsf.altitude = msg.altitude;
 
    nsf.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
