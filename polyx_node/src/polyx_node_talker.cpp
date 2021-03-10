@@ -87,7 +87,7 @@ polyx::ref_frame_trans_type msg13_frame_trans = polyx::ref_frame_trans_type::NO_
 polyx_node::msg::Kalman kalmsg;
 polyx_node::msg::RawIMU imsg;
 polyx_node::msg::SolutionStatus smsg;
-polyx_node::msg::CompactNav msg;
+polyx_node::msg::CompactNav compactNavMsg;
 polyx_node::msg::EulerAttitude qtemsg;
 polyx_node::msg::TimeSync tsmsg;
 polyx_node::msg::Geoid gmsg;
@@ -493,50 +493,41 @@ void PolyxnodeTalker::execute()
                      break;
 
                   case 13:
-                     // RCLCPP_INFO(this->get_logger(),"found message: Type=%02d, SubId=%02d, length=%03d\n", buf[2], buf[3], msglen);
-
-                     if (msg.gps_week_number > 0)
-                     {
-                        GpsToEpoch(msg.gps_week_number, msg.gps_time_week, msg.header.stamp);
-                     }
-                     else
-                     {
-                        msg.header.stamp = this->get_clock()->now();
-                     }
-
-                     parse_CompactNav_message(buf, msg, msg13_frame_trans);
-
-                     if (my_output & OUT_COMPACTNAV)  compactNav_pub_->publish(msg);
+                     parseCompactNav(buf, compactNavMsg, msg13_frame_trans);
+                     
+                     if (my_output & OUT_COMPACTNAV)  
+                        compactNav_pub_->publish(compactNavMsg);
+                        
 #ifdef ENABLED_GEO_POSE_STAMPED
                      if (my_output & OUT_GEOPOSE)
                      {
                         geographic_msgs::msg::GeoPoseStamped pmsg;
-                        icd_to_GeoPoseStamped(msg, pmsg);
+                        icd_to_GeoPoseStamped(compactNavMsg, pmsg);
                         geopose_pub_->publish(pmsg);
                      }
 #endif
                      if (my_output & OUT_TWIST)
                      {
                         geometry_msgs::msg::TwistStamped tmsg;
-                        icd_to_TwistStamped(msg, tmsg);
+                        icd_to_TwistStamped(compactNavMsg, tmsg);
                         twist_pub_->publish(tmsg);
                      }
                      if (my_output & OUT_ACCEL)
                      {
                         geometry_msgs::msg::AccelStamped amsg;
-                        icd_to_AccelStamped(msg, amsg);
+                        icd_to_AccelStamped(compactNavMsg, amsg);
                         accel_pub_->publish(amsg);
                      }
                      if (my_output & OUT_NAVSATFIX)
                      {
                         sensor_msgs::msg::NavSatFix nmsg;
-                        icd_to_NavSatFix(msg, nmsg);
+                        icd_to_NavSatFix(compactNavMsg, nmsg);
                         navfix_pub_->publish(nmsg);
                      }
 
                      if (my_output & OUT_EULER_ATT)
                      {
-                        if (EulerAttitude(msg, qtemsg))
+                        if (EulerAttitude(compactNavMsg, qtemsg))
                         {
                            EulerAttitude_pub_->publish(qtemsg);
                         }
@@ -544,18 +535,18 @@ void PolyxnodeTalker::execute()
                      if (my_output & OUT_IMU)
                      {
                         sensor_msgs::msg::Imu imsg;
-                        parseAttitudeImu(buf, imsg);
+                        icd_to_Imu(compactNavMsg, imsg);
                         imu_pub_->publish(imsg);
                      }
                      if (!is_origin_set) {
-                        SetOrigin(msg, myorigin);
+                        SetOrigin(compactNavMsg, myorigin);
                         is_origin_set = true;
                      }
 
                      if (my_output & OUT_POSE)
                      {
                         geometry_msgs::msg::PoseStamped pmsg;
-                        icd_to_PoseStamped(msg, myorigin, pmsg);
+                        icd_to_PoseStamped(compactNavMsg, myorigin, pmsg);
                         pose_pub_->publish(pmsg);
                      }
 
@@ -738,6 +729,73 @@ void PolyxnodeTalker::parseAttitudeImu(uint8_t* buf, sensor_msgs::msg::Imu& imu)
    else
       GpsToEpoch(week, time, imu.header.stamp);
 
+}
+
+void PolyxnodeTalker::parseCompactNav(
+   uint8_t*          buf, 
+   polyx_node::msg::CompactNav& msg,
+   polyx::ref_frame_trans_type  frame_trans)
+{
+   int p = 6, i;
+   float temp;
+   Decode(&buf[p], msg.gps_time_week); p += 8; //double
+   Decode(&buf[p], msg.latitude);      p += 8; // double [deg]
+   msg.latitude *= DEG_TO_RAD;  // double [rad]
+   Decode(&buf[p], msg.longitude);     p += 8; // double [deg]
+   msg.longitude *= DEG_TO_RAD; // double [rad]
+   Decode(&buf[p], temp);  p += 4; // internally as float[m], but msg.longitude is double
+   msg.altitude = temp;
+   for (i = 0; i < 3; i++)
+   {  
+      Decode(&buf[p], temp);  p += 4; // internally float
+      msg.velocity_ned[i] = temp; // float to double implicitly
+   }
+   for (i = 0; i < 4; i++)
+   {
+      Decode(&buf[p], temp);    p += 4; //float
+      msg.quaternion[i] = temp;
+   }
+   for (i = 0; i < 3; i++)
+   {
+      Decode(&buf[p], temp);  p += 4; //float
+      msg.acceleration[i] = temp;
+   }
+   for (i = 0; i < 3; i++)
+   {
+      Decode(&buf[p], temp); p += 4; //float [deg/s]
+      msg.rotation_rate[i] = temp * DEG_TO_RAD; // to double[rad/s]
+   }
+   for (i = 0; i < 3; i++)
+   {
+      Decode(&buf[p], temp);  p += 4; //float
+      msg.position_rms[i] = temp;
+   }
+   for (i = 0; i < 3; i++)
+   {
+      Decode(&buf[p], temp);  p += 4; //float
+      msg.velocity_rms[i] = temp;
+   }
+   for (i = 0; i < 3; i++)
+   {
+      Decode(&buf[p], temp);  p += 4; // float [deg]
+      msg.attitude_rms[i] = temp * DEG_TO_RAD; // double [rad]
+   }
+   Decode(&buf[p], msg.gps_week_number);  p += 2; // uint16
+   msg.alignment = buf[p];
+
+   if (INI_GPS_WEEK < 0 && msg.gps_week_number > 0)
+      INI_GPS_WEEK = msg.gps_week_number;
+
+   if (frame_trans == ref_frame_trans_type::WGS84_TO_NAD83)
+   {
+      ConvertToNAD83(msg.gps_week_number, msg.gps_time_week, msg.latitude, msg.longitude, msg.altitude);
+   }
+
+   if (msg.gps_week_number == 0xffff)
+      msg.header.stamp = this->get_clock()->now();
+   else
+      GpsToEpoch(msg.gps_week_number, msg.gps_time_week, msg.header.stamp);
+      
 }
 
 int read_port(int fd, uint8_t* buf, size_t max_len, struct timeval* tout)

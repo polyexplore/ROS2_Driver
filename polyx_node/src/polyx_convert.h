@@ -62,6 +62,7 @@
 #include "polyx_node/msg/dmi.hpp"
 #include "polyx_node/msg/nmea_gga.hpp"
 
+#define DEG_TO_RAD (0.017453292519943295)
 
 namespace polyx
 {
@@ -245,7 +246,6 @@ uint8_t checkMessageType(uint8_t *buf);
 void parse_Kalman_message(uint8_t *buf, polyx_node::msg::Kalman &kalmsg);
 void parse_RawIMU_message(uint8_t *buf, polyx_node::msg::RawIMU &imsg);
 void parse_SolutionStatus_message(uint8_t *buf, polyx_node::msg::SolutionStatus &smsg);
-void parse_CompactNav_message(uint8_t* buf, polyx_node::msg::CompactNav& msg, polyx::ref_frame_trans_type frame_trans);
 void parse_TimeSync_message(uint8_t *buf, polyx_node::msg::TimeSync &tsmsg);
 void parse_Geoid_message(uint8_t *buf, polyx_node::msg::Geoid &gmsg);
 void parse_CorrectedIMU_message(uint8_t *buf, polyx_node::msg::CorrectedIMU &imsg);

@@ -30,7 +30,6 @@
 
 #include "polyx_convert.h"
 
-#define DEG_TO_RAD (0.017453292519943295)
 #define RAD_TO_DEG (57.295779513082323)
 #define WGS84_A    (6378137.0)
 #define WGS84_E2   (6.69437999014e-3)
@@ -149,7 +148,8 @@ void icd_to_Imu(polyx_node::msg::CompactNav &msg, sensor_msgs::msg::Imu &imu)
    imu.linear_acceleration.y = msg.acceleration[1]; // right
    imu.linear_acceleration.z = msg.acceleration[2]; // down
 
-  // Unknown acceleration covariance so set to zero
+  // Unknown acceleration covariance
+  imu.angular_velocity_covariance[0] = imu.linear_acceleration_covariance[0] = -1.0;
 
 }
 
@@ -683,68 +683,6 @@ void parse_SolutionStatus_message(uint8_t *buf, polyx_node::msg::SolutionStatus 
       Decode(&buf[p], smsg.attitude_rms[i]); p += 8; // double [deg/s]
       smsg.attitude_rms[i] *= DEG_TO_RAD; // double [rad/s]
    }
-}
-
-void parse_CompactNav_message(
-   uint8_t*          buf, 
-   polyx_node::msg::CompactNav& msg,
-   polyx::ref_frame_trans_type  frame_trans)
-{
-   int p = 6, i;
-   float temp;
-   Decode(&buf[p], msg.gps_time_week); p += 8; //double
-   Decode(&buf[p], msg.latitude);      p += 8; // double [deg]
-   msg.latitude *= DEG_TO_RAD;  // double [rad]
-   Decode(&buf[p], msg.longitude);     p += 8; // double [deg]
-   msg.longitude *= DEG_TO_RAD; // double [rad]
-   Decode(&buf[p], temp);  p += 4; // internally as float[m], but msg.longitude is double
-   msg.altitude = temp;
-   for (i = 0; i < 3; i++)
-   {  
-      Decode(&buf[p], temp);  p += 4; // internally float
-      msg.velocity_ned[i] = temp; // float to double implicitly
-   }
-   for (i = 0; i < 4; i++)
-   {
-      Decode(&buf[p], temp);    p += 4; //float
-      msg.quaternion[i] = temp;
-   }
-   for (i = 0; i < 3; i++)
-   {
-      Decode(&buf[p], temp);  p += 4; //float
-      msg.acceleration[i] = temp;
-   }
-   for (i = 0; i < 3; i++)
-   {
-      Decode(&buf[p], temp); p += 4; //float [deg/s]
-      msg.rotation_rate[i] = temp * DEG_TO_RAD; // to double[rad/s]
-   }
-   for (i = 0; i < 3; i++)
-   {
-      Decode(&buf[p], temp);  p += 4; //float
-      msg.position_rms[i] = temp;
-   }
-   for (i = 0; i < 3; i++)
-   {
-      Decode(&buf[p], temp);  p += 4; //float
-      msg.velocity_rms[i] = temp;
-   }
-   for (i = 0; i < 3; i++)
-   {
-      Decode(&buf[p], temp);  p += 4; // float [deg]
-      msg.attitude_rms[i] = temp * DEG_TO_RAD; // double [rad]
-   }
-   Decode(&buf[p], msg.gps_week_number);  p += 2; // uint16
-   msg.alignment = buf[p];
-
-   if (INI_GPS_WEEK < 0 && msg.gps_week_number > 0)
-      INI_GPS_WEEK = msg.gps_week_number;
-
-   if (frame_trans == ref_frame_trans_type::WGS84_TO_NAD83)
-   {
-      ConvertToNAD83(msg.gps_week_number, msg.gps_time_week, msg.latitude, msg.longitude, msg.altitude);
-   }
-   // deleted header stamp here, and move to node, clock not in this scope, unless nonclass
 }
 
 void parse_TimeSync_message(uint8_t *buf, polyx_node::msg::TimeSync &tsmsg)

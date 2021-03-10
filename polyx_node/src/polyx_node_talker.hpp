@@ -106,6 +106,10 @@ private:
 
     void getTimeStamp(const double t, builtin_interfaces::msg::Time& stamp);
     void parseAttitudeImu(uint8_t* buf, sensor_msgs::msg::Imu& imu);
+    void parseCompactNav(
+       uint8_t*          buf, 
+       polyx_node::msg::CompactNav& msg,
+       polyx::ref_frame_trans_type  frame_trans);
 };
 
 #endif
