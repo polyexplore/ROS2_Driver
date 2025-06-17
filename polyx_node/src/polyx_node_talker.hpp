@@ -56,13 +56,11 @@ public:
 private:	
     void init();
 
-    void polyxWheelSpeedEventCallback(const polyx_node::msg::WheelSpeedEvent::SharedPtr msg);
-    void polyxStaticHeadingEventCallback(const polyx_node::msg::StaticHeadingEvent::SharedPtr stmsg);
-    void polyxStaticGeoPoseEventCallback(const polyx_node::msg::StaticGeoPoseEvent::SharedPtr sgmsg);
     void execute();
     
 
     rclcpp::Publisher<polyx_node::msg::Kalman>::SharedPtr kalman_pub_;
+    rclcpp::Publisher<polyx_node::msg::GnssHmr>::SharedPtr gnssHmr_pub_;
     rclcpp::Publisher<polyx_node::msg::RawIMU>::SharedPtr RawIMU_pub_;
     rclcpp::Publisher<polyx_node::msg::SolutionStatus>::SharedPtr SolutionStatus_pub_;
     rclcpp::Publisher<polyx_node::msg::CompactNav>::SharedPtr compactNav_pub_;
@@ -81,11 +79,8 @@ private:
     rclcpp::Publisher<polyx_node::msg::CorrectedIMU>::SharedPtr CorrectedIMU_pub_;
     rclcpp::Publisher<polyx_node::msg::LeapSeconds>::SharedPtr leapSeconds_pub_;
     rclcpp::Publisher<polyx_node::msg::NmeaGGA>::SharedPtr nmeaGGA_pub_;
+    rclcpp::Publisher<polyx_node::msg::NmeaGGA>::SharedPtr nmeaGGA2_pub_;
     rclcpp::Publisher<polyx_node::msg::Dmi>::SharedPtr dmi_pub_;
-
-    rclcpp::Subscription<polyx_node::msg::WheelSpeedEvent>::SharedPtr wheelSpeed_sub_;
-    rclcpp::Subscription<polyx_node::msg::StaticHeadingEvent>::SharedPtr  staticHeading_sub_;
-    rclcpp::Subscription<polyx_node::msg::StaticGeoPoseEvent>::SharedPtr  staticGeoPose_sub_;
     
     // rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
     // void topic_callback(const std_msgs::msg::String::SharedPtr msg);

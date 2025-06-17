@@ -24,7 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #ifndef _POLYX_NMEA_H
 #define _POLYX_NMEA_H
 
@@ -34,10 +34,10 @@
 // Checks NMEA message checksum validity
 // @return true if valid
 
-bool nmeaChecksum(const char* msg);
+bool nmeaChecksum(const char *msg);
 
 //-----------------------------------------------------------------------------
 // Parses NMEA GGA string into the decoded message format
-void parseNmeaGga(const char* msg, polyx_node::msg::NmeaGGA& gga);
+void parseNmeaGga(const char *msg, polyx_node::msg::NmeaGGA &gga);
 
 #endif
