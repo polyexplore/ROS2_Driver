@@ -1,9 +1,0 @@
-/polyx_events:
-  polyx_node_heading:
-    ros__parameters:
-      use_sim_time: False
-      heading: -11600   # unit [0.01 deg]
-      zupt_rms: 10      # unit [mm/s]
-      heading_rms: 100  # unit [0.1 deg]
-      duration: 1.0     # unit [sec]
-

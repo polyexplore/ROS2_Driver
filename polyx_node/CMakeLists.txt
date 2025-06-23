@@ -38,16 +38,14 @@ include_directories(
 set(msg_files
   "msg/CorrectedIMU.msg"
   "msg/Kalman.msg"
-  "msg/StaticGeoPoseEvent.msg"
   "msg/Dmi.msg"
   "msg/LeapSeconds.msg"
-  "msg/StaticHeadingEvent.msg"
   "msg/EulerAttitude.msg"
   "msg/NmeaGGA.msg"
+  "msg/GnssHmr.msg"
   "msg/TimeSync.msg"
   "msg/Geoid.msg"
   "msg/RawIMU.msg"
-  "msg/WheelSpeedEvent.msg"
   "msg/CompactNav.msg"
   "msg/SolutionStatus.msg"
 )
@@ -75,52 +73,25 @@ add_executable(${PROJECT_NAME}_talker
   src/polyx_convert.cpp
   src/polyx_node_talker.cpp
 )
-add_executable(polyx_node_static_heading
-  src/polyx_node_static_heading.cpp
-)
-add_executable(polyx_node_wheel_speed
-  src/polyx_node_wheel_speed.cpp
-)
 add_executable(polyx_node_listener
   src/polyx_node_listener.cpp
-)
-add_executable(polyx_node_static_geopose
-  src/polyx_node_static_geopose.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_talker 
   ${dependencies}
 )
-ament_target_dependencies(polyx_node_static_heading
-  ${dependencies}
-)
-ament_target_dependencies(polyx_node_wheel_speed
-  ${dependencies}
-)
 ament_target_dependencies(polyx_node_listener
-  ${dependencies}
-)
-ament_target_dependencies(polyx_node_static_geopose
   ${dependencies}
 )
 #### installing
 # Install executables
 install(TARGETS
   ${PROJECT_NAME}_talker
-  polyx_node_static_heading
-  polyx_node_wheel_speed
   polyx_node_listener
-  polyx_node_static_geopose
   DESTINATION lib/${PROJECT_NAME}
 )
 rosidl_target_interfaces(${PROJECT_NAME}_talker
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
-rosidl_target_interfaces(polyx_node_static_heading
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-rosidl_target_interfaces(polyx_node_wheel_speed
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 rosidl_target_interfaces(polyx_node_listener
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-rosidl_target_interfaces(polyx_node_static_geopose
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # Install launch files.

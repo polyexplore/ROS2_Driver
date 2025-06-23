@@ -24,7 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -34,26 +34,27 @@
 
 using namespace std::chrono_literals;
 
-void intHandler(int) 
+void intHandler(int)
 {
-   printf("polyx_node_talker: Ctrl-C hit, will stop!\r\n");
+    printf("polyx_node_talker: Ctrl-C hit, will stop!\r\n");
 }
 
-void abortHandler(int) 
+void abortHandler(int)
 {
-   printf("polyx_node_talker: Asked to Abort, will stop!\r\n");
+    printf("polyx_node_talker: Asked to Abort, will stop!\r\n");
 }
 
-void segHandler(int) {
-   printf("polyx_node_talker: Segment Fault\r\n");
+void segHandler(int)
+{
+    printf("polyx_node_talker: Segment Fault\r\n");
 }
 
-void ioHandler(int) {
-   printf("polyx_node_talker: Received SIGIO\r\n");
+void ioHandler(int)
+{
+    printf("polyx_node_talker: Received SIGIO\r\n");
 }
 
-
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
 
     struct sigaction int_act;

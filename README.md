@@ -30,8 +30,6 @@
     </li>
     <li><a href="#ethernet-output">Ethernet Output</a></li>
     <li><a href="#local-map-origin">Local Map Origin</a></li>
-    <li><a href="#static-heading Event">Static Heading Event</a></li>
-    <li><a href="#static-geopose Event">Static Geo-Pose Event</a></li>
     <li><a href="#imu-data">IMU Data</a></li>
     <li><a href="#geoid-height">Geoid Height</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -80,17 +78,11 @@ We have successfully built our driver on Dashing and Foxy-FitzRoy
           eth_enable: True
           eth_server: 192.168.130.97 #"10.1.10.194"
           eth_port: "8888"
-          polyx_wheelspeed:   "/polyx_events/polyx_WheelSpeed"
-          polyx_staticheading: "/polyx_events/polyx_StaticHeading"
-          polyx_staticgeopose: "/polyx_events/polyx_StaticGeoPose"
-          polyx_output: 0xFFFFFFFF
+          polyx_output: 0xFF
     ```
   * eth_server to the static ip you found out in the last step
   * eth_enable turns on/off ethernet port
   * eth_port is fixed to "8888"
-  * polyx_wheelspeed is the wheel speed event 
-  * polyx_staticgeopose is the static geopose event
-  * polyx_staticheading is the static heading event
   * polyx_output is the bitmask for output messages, by default everything is turned on
 3. launch the talker
     ```sh
@@ -126,85 +118,6 @@ After any modification, please compile again using the following commands
 ```sh
 cd ~/colcon_ws && colcon build --symlink-install
 ```
-
-## Static Geo-Pose Event
-
-Sometimes, GNSS signals are not available. In this case, the static geo-pose event can be used to 
-initialize or aid the system. Especially, it is possible to hold the position and heading at a specific 
-point. To generate this event, open a new terminal and follow the steps below: 
-
-```sh
-ros2 launch polyx_node polyx_static_geopose_launch.py 
-```
-a sample param file can be found at param/polyx_static_geopose_params.yaml
-```yaml
-/polyx_events: # this ns has to be consistent with launch.py ns(which overwrite node ns)
-  event_gen: # this name has to be consistent with node name, not type!
-    ros__parameters:
-      use_sim_time: False
-      latitude: 37.405109067        #[deg]
-      longitude: -121.918100758     #[deg]
-      ellipsoidal_height: -10.136   #[m]
-      roll: 0         #[0.01 deg]
-      pitch: 0        #[0.01 deg]
-      heading: 2500   #[0.01 deg]
-      position_rms: 1  #[cm]
-      zupt_rms: 10            #[mm]
-      heading_rms: 10        #[0.1 deg]
-      flags: 0
-```
-
-where latitude, longitude, ellipsoidal_height, position_rms, zupt_rms, heading, 
-heading_rms, roll, pitch are optional parameters and the units are in degrees, degrees, 
-m, m, m/s, degrees, degrees, seconds, degrees, degrees, respectively. 
-
-Valid range of optional parameters: 
-latitude: -90 ~ 90 deg; longitude: -180 ~ 180 deg; 
-position_rms: 0.00 ~ 655.35 m; zupt_rms: 0.000 ~ 65.535 m/s; 
-heading: -180.00 ~ 180.00 deg; heading_rms: 0.0 ~ 25.5 deg; 
-roll: -180.00 ~ 180.00 deg; pitch: -90.00 ~ 90.00 deg; 
-To see more use the following command:
-```sh
-ros2 msg show polyx_node/msg/StaticGeoPoseEvent
-```
-You are also welcome to take a look at the source code
-
-## Static Heading Event
-
-It may be difficult to initialize the heading by the dual-GNSS antenna system if the system is in a location where the signal is degraded. In this case, the system can be initialized using the static heading event. To generate this event, open a new terminal and follow the steps below:
-  ```sh
-  ros2 launch polyx_node polyx_static_heading_launch.py
-  ```
-An example param file can be found at param/polyx_static_heading_params.yaml, like below
-  ```yaml
-  /polyx_events:
-    polyx_node_heading:
-      ros__parameters:
-        use_sim_time: False
-        heading: -11600   # unit [0.01 deg]
-        zupt_rms: 10      # unit [mm/s]
-        heading_rms: 100  # unit [0.1 deg]
-        duration: 1.0     # unit [sec]
-  ```
-where duration is the time interval during which we want to generate the event message. 
-Please be very careful with the units, we left comments in the yaml param file. Also you can check the msg type with the following command
-```sh
-ros2 msg show polyx_node/msg/StaticHeadingEvent
-```
-then you should see something like this
-```sh
-std_msgs/Header header
-
-# unit: 0.01 deg
-int16 heading
-
-# unit: mm/s
-uint16 zupt_rms
-
-# unit: 0.1 deg
-uint8 heading_rms
-```
-
 
 ## IMU Data
 

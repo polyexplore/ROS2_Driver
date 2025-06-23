@@ -20,12 +20,12 @@ def generate_launch_description():
         launch.actions.SetEnvironmentVariable(
             'RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1'),
         
-        # dashing 
+        # [node_namespace] and [node_executable] deprecated after distro Dashing
         Node(
             package='polyx_node',
-            node_namespace='polyx_ns', # kick in, override
-            node_executable='polyx_node_talker',
-            name='polyx_name', # useless
+            namespace='polyx_ns', # kick in, override
+            executable='polyx_node_talker',
+            name='polyx_node_talker', # useless
             output='screen', # requirement #2
             parameters=[param_file]
         )
